@@ -1,0 +1,14 @@
+[gene-expression]
+reference,./Cellrangerv103_NCBI/MacacaMulattav103NCBI
+create-bam,true
+
+[vdj]
+reference,./all_database_Bosinger_LWedit
+
+[feature]
+reference,./Multifiles/HashingConfig.csv
+
+[libraries]
+fastq_id,fastqs,feature_types
+010-RUp16-Efficacy_Wk93_GEX,./010-RUp16-Efficacy_Wk93/5GEX,Gene Expression
+010-RUp16-Efficacy_Wk93_VDJ,./010-RUp16-Efficacy_Wk93/VDJ,VDJ

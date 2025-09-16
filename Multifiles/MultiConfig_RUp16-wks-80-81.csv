@@ -1,0 +1,20 @@
+[gene-expression]
+reference,./Cellrangerv103_NCBI/MacacaMulattav103NCBI
+create-bam,true
+
+[vdj]
+reference,./all_database_Bosinger_LWedit
+
+[feature]
+reference,./Multifiles/HashingConfigv2.csv
+
+[libraries]
+fastq_id,fastqs,feature_types
+010_RUp16_Wk80-81_5GEX,./010_RUp16_Wk80-81/010_RUp16_Wk80-81_5GEX,Gene Expression
+010_RUp16_Wk80-81_VDJ,./010_RUp16_Wk80-81/010_RUp16_Wk80-81_VDJ,VDJ
+010_RUp16_Wk80-81_CSP,./010_RUp16_Wk80-81/010_RUp16_Wk80-81_CSP,Antibody Capture
+
+[samples]
+sample_id,hashtag_ids
+RUp16_Wk80,Hash4Human
+RUp16_Wk81,Hash5Human
