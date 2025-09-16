@@ -10,3 +10,8 @@ This repository cantains the code for the Derdeyn lab 10x single cell VDJ analys
 * 3.SHManalysis.r - code that performs somatic hypermutation analysis (percent identity between sequences and germline across SOSIPs)
 * 4.BLI_analysis.r - generates figures for BLI data
 * MyersManuscriptENV.yml - contains conda enviornment for running code 
+
+### Citation 
+--------------------
+
+TBD
