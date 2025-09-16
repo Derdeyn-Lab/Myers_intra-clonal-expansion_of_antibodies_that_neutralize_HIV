@@ -528,44 +528,13 @@ combined.BCR.comb <- combined.BCR
 combined.BCR.comb[['RUp16_Wk26']] <- rbind(combined.BCR.comb[['RUp16_Wk26']], combined.BCR.comb[['RUp16_WK26v2']])
 combined.BCR.comb[['RUp16_WK26v2']] <- NULL
 
-clonalHomeostasis(combined.BCR.comb, cloneCall = "LW_clones",cloneSize = c(Rare = 0.001, Small = 0.01, Medium = 0.1, Large = 0.3, Hyperexpanded =
-    1)) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7.5))
-ggsave(file.path(results_folder, "ClonalHomeostasis.png"),width=5, height=4, dpi=300)
-ggsave(file.path(results_folder, "ClonalHomeostasis.pdf"),width=5, height=4, dpi=300)
+
 clonalHomeostasis(combined.BCR.comb, cloneCall = "LW_clones",cloneSize = c(Rare = 0.001, Small = 0.02, Medium = 0.1, Large = 0.3, Hyperexpanded =
     1)) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7.5), axis.title.x=element_blank(), legend.text = element_text(size=8)) +
     scale_x_discrete(labels = c("Wk18", "Wk20", "Wk26", "Wk36","Wk48","Wk49","Wk80","Wk81","LN-Wk83", "Wk87", "Wk93"))
-ggsave(file.path(results_folder, "ClonalHomeostasisnewthreshold.png"),width=4.5, height=4, dpi=300)
-ggsave(file.path(results_folder, "ClonalHomeostasisnewthreshold.pdf"),width=4.5, height=4, dpi=300)
+ggsave(file.path(results_folder, "Figure1A.png"),width=4.5, height=4, dpi=300)
+ggsave(file.path(results_folder, "Figure1A.pdf"),width=4.5, height=4, dpi=300)
 
-clonalQuant(combined.BCR.comb, cloneCall="LW_clones", chain = "both", scale = TRUE) + 
-            theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7.5))
-ggsave(file.path(results_folder, "ClonalQuant.png"))
-ggsave(file.path(results_folder, "ClonalQuant.pdf"))
-
-pl <- clonalCompare(combined.BCR.comb, 
-            top.clones = 30,
-            #   relabel.clones = TRUE,
-            cloneCall="LW_clones",  
-            graph = "alluvial") + theme(legend.position = "none",
-                axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7.5)) +
-            scale_x_discrete(labels = c("Wk18", "Wk20", "Wk26", "Wk36","Wk48","Wk49","Wk80","Wk81","Wk83", "Wk87", "Wk93"))
-
-ggsave(file.path(results_folder, "ClonalCompare.png"),  width=3, height=4, dpi=300)
-ggsave(file.path(results_folder, "ClonalCompare.pdf"),  width=3, height=4, dpi=300)
-
-bkcoi <- c("616", "596", "817","304","306","583", "621", "574","739","613","743", "708")
-lwcoi <- c("684", "695", "1303","386","385","599", "659", "692","951","611","762", "651")
-for (i in lwcoi) {
-    pl <- clonalCompare(combined.BCR.comb, 
-                top.clones = 30,
-                  highlight.clones= c(i),
-                #   relabel.clones = TRUE,
-                cloneCall="LW_clones",  
-                graph = "alluvial") + theme(legend.position = "none") +
-                theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7.5))
-    ggsave(file.path(results_folder, paste0(i, "ClonalCompare.png")))
-}
 lwcoi <- c("684", "695", "1303","386","385","599")
 pl <- clonalCompare(combined.BCR.comb, 
     top.clones = 30,
@@ -597,28 +566,6 @@ pl <- clonalCompare(combined.BCR.comb,
         axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7.5))
 ggsave(file.path(results_folder, "ClonalCompare_allcoi_LWcallLEGEND.pdf"),  width=8, height=4, dpi=300)
 
-predictedcoi <- c( "659", "692","951","611","762", "651")
-
-pl <- clonalCompare(combined.BCR.comb, 
-    top.clones = 30,
-        highlight.clones= predictedcoi,
-    #    relabel.clones = TRUE,
-    cloneCall="LW_clones",  graph = "alluvial") + 
-    theme(legend.position = "none", 
-        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7.5))
-ggsave(file.path(results_folder, "ClonalCompare_pred_LWcall.png"),  width=4, height=4, dpi=300)
-ggsave(file.path(results_folder, "ClonalCompare_pred_LWcall.pdf"),  width=4, height=4, dpi=300)
-
-pl <- clonalCompare(combined.BCR.comb, 
-    top.clones = 30,
-        highlight.clones= predictedcoi,
-    #    relabel.clones = TRUE,
-    cloneCall="LW_clones",  graph = "alluvial") + 
-    theme(
-        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7.5))
-ggsave(file.path(results_folder, "ClonalCompare_pred_LWcallLEGEND.png"),  width=8, height=4, dpi=300)
-ggsave(file.path(results_folder, "ClonalCompare_pred_LWcallLEGEND.pdf"),  width=8, height=4, dpi=300)
-
 saveRDS(combined.BCR.comb, file.path(results_folder, "combinedBCRcomb.rds"))
 results_folder <- file.path("RUp16_results", "VDJAnalysisNoWeek36D1_no_42-96_final")
 combined.BCR.comb <- readRDS(file.path(results_folder, "combinedBCRcomb.rds"))
@@ -635,8 +582,8 @@ ggplot(dfcellnum, aes(x=sample, y=cell.number)) +
     axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7.5),
     axis.text.y = element_text(size=7.5), axis.title.x=element_blank(), axis.title.y=element_text(size=9)) + labs(y="VDJ cells") +
      scale_x_discrete(labels = c("Wk18", "Wk20", "Wk26", "Wk36","Wk48","Wk49","Wk80","Wk81","LN-Wk83", "Wk87", "Wk93"))
-ggsave(file.path(results_folder, "VDJcellscount.png"), width=3, height = 3,units="in",dpi=300)
-ggsave(file.path(results_folder, "VDJcellscount.pdf"), width=3, height = 3,units="in",dpi=300)
+ggsave(file.path(results_folder, "Figure1B.png"), width=3, height = 3,units="in",dpi=300)
+ggsave(file.path(results_folder, "Figure1B.pdf"), width=3, height = 3,units="in",dpi=300)
 
 # creaate pivot 
 countlist <- list()
@@ -700,8 +647,8 @@ LWclones_SOSIP <- Atotal$LW_clones
 ggplot(Atotal, aes(x=LW_clones, y=SOSIP_count)) + geom_col() + labs(y="SOSIP count") + 
 theme_Publication(base_size = 10) + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 3.5),
     axis.title.x=element_blank(),panel.grid.major = element_blank())
-ggsave(file.path(results_folder, "bar_SOSIPcount.png"), width=5.5, height = 3, dpi=300)
-ggsave(file.path(results_folder, "bar_SOSIPcount.pdf"), width=5.5, height = 3, dpi=300)
+ggsave(file.path(results_folder, "SupplFig3.png"), width=5.5, height = 3, dpi=300)
+ggsave(file.path(results_folder, "SupplFig3.pdf"), width=5.5, height = 3, dpi=300)
 
 cells <- c()
 for (n in names(combined.BCR.comb)) {
@@ -743,18 +690,6 @@ dfmeltsub$variable <- as.character(dfmeltsub$variable)
 dfmeltsub$variable[dfmeltsub$variable=="heavy.length"] <- "heavy"
 dfmeltsub$variable[dfmeltsub$variable=="light.length"] <- "light"
 
-dummy <- dfmeltsub %>%
-  group_by(variable) %>%
-  summarize(median = median(value))
-
-p <- ggplot(dfmeltsub, aes(x=value)) +
-  geom_density() + theme_Publication() +
-  theme(panel.grid.major = element_blank(),  strip.background = element_rect(colour = "white", fill = "white")) +
-  geom_vline(data = dummy, aes(xintercept = median), linetype="dashed", color="blue") + facet_wrap(~variable, ncol=1, scale="free") +
-  labs(x="CDR3 aa length") +scale_x_continuous(breaks = scales::pretty_breaks(n = 9))
-ggsave(file.path(results_folder, "cdr3lengthheavy&light.png"), width=3, height=6,dpi=300)
-ggsave(file.path(results_folder, "cdr3lengthheavy&light.pdf"), width=3, height=6,dpi=300)
-
 dummyheavy <- dfmeltsub[dfmeltsub$variable=="heavy", ] %>%
   group_by(variable) %>%
   summarize(median = median(value))
@@ -763,8 +698,8 @@ p <- ggplot(dfmeltsub[dfmeltsub$variable=="heavy", ], aes(x=value)) +
   axis.text.y=element_text(size=8), plot.title = element_text(size=10), axis.title = element_text(size=8)) +
   geom_vline(data = dummylight, aes(xintercept = median), linetype="dashed", color="blue") +# facet_wrap(~variable, ncol=1, scale="free") +
   labs(title="heavy", x="CDR3 aa length") + scale_x_continuous(breaks = seq(min(dfmeltsub[dfmeltsub$variable=="heavy", "value"]), max(dfmeltsub[dfmeltsub$variable=="heavy", "value"]), by = 1))
-ggsave(file.path(results_folder, "cdr3lengthheavy_final.png"), width=3, height=3,dpi=300)
-ggsave(file.path(results_folder, "cdr3lengthheavy_final.pdf"), width=3, height=3,dpi=300)
+ggsave(file.path(results_folder, "SupplFig2C.png"), width=3, height=3,dpi=300)
+ggsave(file.path(results_folder, "SupplFig2C.pdf"), width=3, height=3,dpi=300)
 dummylight <- dfmeltsub[dfmeltsub$variable=="light", ] %>%
   group_by(variable) %>%
   summarize(median = median(value))
@@ -773,40 +708,9 @@ p <- ggplot(dfmeltsub[dfmeltsub$variable=="light", ], aes(x=value)) +
   axis.text.y=element_text(size=8), plot.title = element_text(size=10), axis.title = element_text(size=8)) +
   geom_vline(data = dummylight, aes(xintercept = median), linetype="dashed", color="blue") +# facet_wrap(~variable, ncol=1, scale="free") +
   labs(title="light", x="CDR3 aa length") + scale_x_continuous(breaks = seq(min(dfmeltsub[dfmeltsub$variable=="light", "value"]), max(dfmeltsub[dfmeltsub$variable=="light", "value"]), by = 1))
-ggsave(file.path(results_folder, "cdr3lengthlight_final.png"), width=3, height=3,dpi=300)
-ggsave(file.path(results_folder, "cdr3lengthlight_final.pdf"), width=3, height=3,dpi=300)
+ggsave(file.path(results_folder, "SupplFig2D.png"), width=3, height=3,dpi=300)
+ggsave(file.path(results_folder, "SupplFig2D.pdf"), width=3, height=3,dpi=300)
 
-labelsyaxis <- list("heavy.length"=0.14, "light.length"=1.5,"full.length"=0.13)
-for (v in unique(dfmelt$variable)) {
-    dflengthclone <- dfmelt[dfmelt$variable==v,] %>%
-        group_by(LW_clones) %>%
-        dplyr::summarize(Mean = mean(value, na.rm=TRUE))
-    dflengthclone <- as.data.frame(dflengthclone)
-    dflengthclone <- dflengthclone[!is.na(dflengthclone$LW_clones),]
-    p <- ggplot(dflengthclone, aes(x=Mean)) + 
-    geom_density() + theme_Publication() + labs(x=paste0("mean cdr3 ",v," by clonotype")) +
-    geom_vline(xintercept=c(dflengthclone[dflengthclone$LW_clones=="684","Mean"],
-    dflengthclone[dflengthclone$LW_clones=="695","Mean"],  dflengthclone[dflengthclone$LW_clones=="1303","Mean"]), color="blue",
-        linetype="dashed", linewidth=1) +
-        coord_cartesian(clip = "off") +
-        theme(plot.margin = margin(30, 20, 20, 20), panel.border = element_blank()) +
-        theme(panel.border = element_blank()) +
-    annotation_custom(grid::textGrob("684", rot = 90), 
-                        xmin = dflengthclone[dflengthclone$LW_clones=="684","Mean"],
-                        xmax = dflengthclone[dflengthclone$LW_clones=="684","Mean"],
-                        ymin = labelsyaxis[[v]]) +
-    annotation_custom(grid::textGrob("695", rot = 90), 
-                        xmin = dflengthclone[dflengthclone$LW_clones=="695","Mean"],
-                        xmax = dflengthclone[dflengthclone$LW_clones=="695","Mean"],
-                        ymin =labelsyaxis[[v]]) +
-    annotation_custom(grid::textGrob("1303", rot = 90), 
-                        xmin = dflengthclone[dflengthclone$LW_clones=="1303","Mean"],
-                        xmax = dflengthclone[dflengthclone$LW_clones=="1303","Mean"],
-                        ymin = labelsyaxis[[v]])
-    ggsave(file.path(results_folder, paste0("cdr3length_",v,"_byclone.png")), width=5, height=3,dpi=300)
-    ggsave(file.path(results_folder, paste0("cdr3length_",v,"_byclone.pdf")), width=5, height=3,dpi=300)
-
-}
 ############## --Get heavy light chain comninations --##############
 results_folder <- file.path("RUp16_results","heavylightchaincombinations")
 generate_folder(results_folder)
@@ -834,11 +738,7 @@ dfhlcount <- dfhlcount[rev(order(dfhlcount$n)),]
 dfhlcount$per <- (dfhlcount$n/sum(dfhlcount$n))*100
 dfhlcountsub <- head(dfhlcount, 20)
 dfhlcountsub$comb <- factor(dfhlcountsub$heavy, levels=dfhlcountsub$heavy)
-ggplot(dfhlcountsub, aes(x=comb, y=per)) + geom_bar(stat = "identity",  fill="black") +
-    theme_Publication()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 10),
-    axis.title.x=element_blank()) + labs(y="percentage") + theme(panel.grid.major = element_blank())
-ggsave(file.path(results_folder, "heavychaincomb.png"),width=4, height=4, dpi=300)
-ggsave(file.path(results_folder, "heavychaincomb.pdf"),width=4, height=4, dpi=300)
+
 dfheavy <- dfhlcountsub
 dfhlcount <- dfhl %>% group_by(light, LW_clones) %>%
     dplyr::count()
@@ -852,11 +752,7 @@ dfhlcount$per <- (dfhlcount$n/sum(dfhlcount$n))*100
 dfhlcountsub <- head(dfhlcount, 20)
 dfhlcountsub$comb <- factor(dfhlcountsub$light, levels=dfhlcountsub$light)
 dflight <- dfhlcountsub
-ggplot(dfhlcountsub, aes(x=comb, y=per)) + geom_bar(stat = "identity",  fill="black") +
-    theme_Publication()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 10),
-    axis.title.x=element_blank()) + labs(y="percentage") + labs(y="percentage") + theme(panel.grid.major = element_blank())
-ggsave(file.path(results_folder, "lightchaincomb.png"),width=4, height=4, dpi=300)
-ggsave(file.path(results_folder, "lightchaincomb.pdf"),width=4, height=4, dpi=300)
+
 dfheavy$chain  <- rep("heavy", nrow(dfheavy))
 dflight$chain <- rep("light", nrow(dflight))
 colnames(dfheavy)[1] <- "gene"
@@ -866,5 +762,5 @@ ggplot(df, aes(x=comb, y=per)) + geom_bar(stat = "identity",  fill="black") + fa
     theme_Publication()+theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 10),
     axis.title.x=element_blank()) + labs(y="percentage") + labs(y="percentage") + theme(panel.grid.major = element_blank(), 
     strip.background = element_rect(colour = "white", fill = "white"))
-ggsave(file.path(results_folder, "heavy&lightchaincomb.png"),width=7, height=4, dpi=300)
-ggsave(file.path(results_folder, "heavy&lightchaincomb.pdf"),width=7, height=4, dpi=300)
+ggsave(file.path(results_folder, "SupplFig2A-B.png"),width=7, height=4, dpi=300)
+ggsave(file.path(results_folder, "SupplFig2A-B.pdf"),width=7, height=4, dpi=300)
