@@ -5,7 +5,7 @@ This repository cantains the code for the Derdeyn lab 10x single cell VDJ analys
 ### Code description 
 --------------------
 
-* 1.CR_align_mult.sh - alignment code using cellranger
+* 1.CR_align_mult.sh - alignment code using cellranger (would need to download cellranger v9.0.1)
 * 2.SC_VDJ_analysis.r - code that does VDJ analysis using scRepetoire
 * 3.SHManalysis.r - code that performs somatic hypermutation analysis (percent identity between sequences and germline across SOSIPs)
 * 4.BLI_analysis.r - generates figures for BLI data
