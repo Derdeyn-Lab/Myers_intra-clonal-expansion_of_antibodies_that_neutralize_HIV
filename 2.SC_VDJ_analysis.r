@@ -580,7 +580,7 @@ dfcellnum$sample <- factor(dfcellnum$sample, levels=dfcellnum$sample )
 ggplot(dfcellnum, aes(x=sample, y=cell.number)) +
   geom_col() + theme_Publication() + theme(panel.grid.major = element_blank(),
     axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7.5),
-    axis.text.y = element_text(size=7.5), axis.title.x=element_blank(), axis.title.y=element_text(size=9)) + labs(y="VDJ cells") +
+    axis.text.y = element_text(size=7.5), axis.title.x=element_blank(), axis.title.y=element_text(size=9)) + labs(y="VDJ sequences") +
      scale_x_discrete(labels = c("Wk18", "Wk20", "Wk26", "Wk36","Wk48","Wk49","Wk80","Wk81","LN-Wk83", "Wk87", "Wk93"))
 ggsave(file.path(results_folder, "Figure1B.png"), width=3, height = 3,units="in",dpi=300)
 ggsave(file.path(results_folder, "Figure1B.pdf"), width=3, height = 3,units="in",dpi=300)
@@ -696,7 +696,7 @@ dummyheavy <- dfmeltsub[dfmeltsub$variable=="heavy", ] %>%
 p <- ggplot(dfmeltsub[dfmeltsub$variable=="heavy", ], aes(x=value)) +
   geom_density() + theme_Publication() + theme(panel.grid.major = element_blank(), axis.text.x=element_text(angle = 90, hjust = 1, vjust = 0.5,size=7), 
   axis.text.y=element_text(size=8), plot.title = element_text(size=10), axis.title = element_text(size=8)) +
-  geom_vline(data = dummylight, aes(xintercept = median), linetype="dashed", color="blue") +# facet_wrap(~variable, ncol=1, scale="free") +
+  geom_vline(data = dummyheavy, aes(xintercept = median), linetype="dashed", color="blue") +# facet_wrap(~variable, ncol=1, scale="free") +
   labs(title="heavy", x="CDR3 aa length") + scale_x_continuous(breaks = seq(min(dfmeltsub[dfmeltsub$variable=="heavy", "value"]), max(dfmeltsub[dfmeltsub$variable=="heavy", "value"]), by = 1))
 ggsave(file.path(results_folder, "SupplFig2C.png"), width=3, height=3,dpi=300)
 ggsave(file.path(results_folder, "SupplFig2C.pdf"), width=3, height=3,dpi=300)
