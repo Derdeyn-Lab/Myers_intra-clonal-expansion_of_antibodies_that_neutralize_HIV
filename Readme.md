@@ -4,7 +4,7 @@ This repository cantains the code for the Derdeyn lab 10x single cell VDJ analys
 
 ### Data  
 --------------------
-TBD (GSE number)
+BioProject: PRJNA1357351
 
 ### Code description 
 --------------------
