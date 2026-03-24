@@ -75,7 +75,9 @@ read_in_raw_bli_data <- function(file, results_folder) {
             # if ("1A8" %in% colnames(df)) {
             #     print(i)
             # }
-            df <- df[!(df$Sample %in% c("1a8", "1A8", "1A8 -new", "1A8 - new","1A8-NEW","66", "64")), !(colnames(df) %in% c("1a8", "1A8","1A8 -new", "1A8 - new","1A8-NEW", "66", "64")) ]
+            if (!(i %in% c("Run32", "Run33", "Run34", "Run35"))) {
+                df <- df[!(df$Sample %in% c("1a8", "1A8", "1A8 -new", "1A8 - new","1A8-NEW","66", "64")), !(colnames(df) %in% c("1a8", "1A8","1A8 -new", "1A8 - new","1A8-NEW", "66", "64")) ]
+            }
             list_of_sheets[[i]] <- df
             list_of_sheets[[i]] <- list_of_sheets[[i]][list_of_sheets[[i]]$Sample!="no mAb",]
             row.names(list_of_sheets[[i]]) <- list_of_sheets[[i]]$Sample
@@ -88,6 +90,7 @@ read_in_raw_bli_data <- function(file, results_folder) {
     for (i in names(norm_list)) {      
         print(i)
         norm_list[[i]] <- as.matrix(as.data.frame(norm_list[[i]]))
+        #print(norm_list[[i]])
         class(norm_list[[i]]) <- "numeric"
         norm_antibody <- colnames(norm_list[[i]] )
         norm_antibody <- norm_antibody[!(norm_antibody %in% c("Sample", "no mAb" ))]
@@ -109,7 +112,7 @@ read_in_raw_bli_data <- function(file, results_folder) {
 }
 
 generate_pair_combinations <- function(orderp, orders) {
-    dfcomb <- as.data.frame(matrix(nrow=(length(primary)*(length(secondary)-1)), ncol=3))
+    dfcomb <- as.data.frame(matrix(nrow=(length(orderp)*(length(orders)-1)), ncol=3))
     colnames(dfcomb) <- c("combpair", "primary", "secondary")
     counter=1
     counterpair=1
@@ -148,12 +151,16 @@ organize_data <- function(data,dfcomb, primary, secondary) {
         for (s in secondary){
             for (i in names(data$values)) {
                 if (((p %in% colnames(data$values[[i]])) & (s %in% data$values[[i]]$SAMPLE))) {
-                    tmp <- rbind(tmp, c(s, data$values[[i]][data$values[[i]]$SAMPLE==s, p]))
+                    tmp <- rbind(tmp, c(s, data$values[[i]][data$values[[i]]$SAMPLE==s, p], i))
                 }
             }
         }
+        print(1)
+        print(p)
+        print(s)
         tmp <- as.data.frame(tmp)
-        colnames(tmp) <- c("secondary", "values")
+        print(tmp)
+        colnames(tmp) <- c("secondary", "values", "run")
         tmp$values <- as.numeric(tmp$values)
         dfpairsallnormvalues[[p]] <- tmp
 
@@ -197,6 +204,7 @@ organize_data <- function(data,dfcomb, primary, secondary) {
     }
     dfpairsallnormvaluesdf$pair <- pair
     dfpairsallnormvaluesdf$combid <- combid
+
     dfpairsallnormvaluesdf$combid <- factor(dfpairsallnormvaluesdf$combid, 
         levels=c(unique(dfcomb$combpair), paste0("comb", length(unique(dfcomb$combpair))+1)))
     ggplot(dfpairsallnormvaluesdf, aes(x=combid, y=values, group=pair)) +
@@ -281,19 +289,28 @@ generate_initial_avgs_hm <- function(datapairs, primary, secondary, label) {
         } 
 
     }
-    df <-df[orders,orderp]
+    df <-df[secondary,primary]
     df <- df*100
+    print(df)
     write.csv(df, file.path(results_folder, paste0("averagedNormPairs_", label,".csv")))
     df <- as.matrix(data.frame(df))
-    rownames(df) <- colnames(df)[1:nrow(df)]
+    print(df)
     colnames(df) <- str_replace_all(colnames(df), "X", "mAb-")
-    rownames(df) <- str_replace_all(rownames(df), "X", "mAb-")
-
+    new_row <- c()
+    for (i in rownames(df)) {
+        if (!(i %in% c("CD4.IG", "VRC01","CH103", "EM4C04"))) {
+            new_row <- c(new_row,paste0("mAb-",i))
+        } else {
+            new_row <- c(new_row,i)
+        }
+    }
+    rownames(df) <- new_row
+    print(df)
     col_fun <- colorRamp2(c(-20, 0, 20, 40, 60, 80), c("darkred","red", "orange", "yellow","green", "darkgreen"))
-    Stagecol <- factor(rep(c("695", "684","1303","386","385",  "VRCO1", "EM4C04"), c(3, 4, 1, 2, 3, 1, 1)),
-    levels =c("695", "684","1303","386","385",  "VRCO1", "EM4C04"))
-    Stagerow <- factor(rep(c("695", "684","1303","386","385", "VRCO1"), c(3, 4,1, 2, 3, 1)),
-    levels =c("695", "684","1303","386","385", "VRCO1"))
+    Stagecol <- factor(rep(c("695", "684","1303","386","385",  "VRCO1", "CD4 Ig","CH103"),  c(1, 1, 1, 1, 1, 1, 1,1)),
+    levels =c("695", "684","1303","386","385",  "VRCO1",  "CD4 Ig", "CH103" ))
+    Stagerow <- factor(rep(c("695", "684","1303","386","385", "VRCO1",  "CD4 Ig","CH103"), c(1, 1, 1, 1,1,1,1,1)),
+    levels =c("695", "684","1303","386","385", "VRCO1","CD4 Ig","CH103"))
     hmC <- Heatmap(df,
         name = "% residual\nbinding",  na_col = "white",
         col = col_fun,
@@ -334,13 +351,17 @@ generate_final_avgs_hm <- function(dfall, primary, secondary, label) {
     rownames(dffinal) <- secondary
     colnames(dfall) <- str_remove_all(colnames(dfall), "mAb-")
     rownames(dfall) <- str_remove_all(rownames(dfall), "mAb-")
-    dffinal <- dffinal[orders,orderp]
-
+    dffinal <- dffinal[secondary,primary]
+    print(dfall)
     for (i in unique(dfcomb$combpair)) {
         dftmp <- dfcomb[dfcomb$combpair==i,]
         if ("EM4C04" %in% dftmp[,"primary"]) {
             dffinal[dftmp[,"primary"][2] , "EM4C04"] <- dfall[dftmp[,"primary"][2], "EM4C04"]
-        } else { 
+        # } else if ("CD4.IG" %in% dftmp[,"primary"]) {
+        #     print(dftmp)
+        #     dffinal[dftmp[,"primary"][2] , "CD4.IG"] <- dfall[dftmp[,"primary"][2], "CD4.IG"]
+
+       } else { 
             if(is.na(dfall[dftmp[1,"primary"] ,dftmp[1,"secondary"]]) & is.na(dfall[dftmp[2,"primary"] ,dftmp[2,"secondary"]])) {
                 dffinal[dftmp[1,"primary"] ,dftmp[1,"secondary"]] <- NA
                 dffinal[dftmp[2,"primary"] ,dftmp[2,"secondary"]] <- NA
@@ -360,9 +381,16 @@ generate_final_avgs_hm <- function(dfall, primary, secondary, label) {
 
     write.csv(dffinal, file.path(results_folder, paste0("FINALaveragedNormPairs_", label,".csv")))
     dffinal <- as.matrix(data.frame(dffinal))
-    rownames(dffinal) <- colnames(dffinal)[1:nrow(dffinal)]
     colnames(dffinal) <- str_replace_all(colnames(dffinal), "X", "mAb-")
-    rownames(dffinal) <- str_replace_all(rownames(dffinal), "X", "mAb-")
+    new_row <- c()
+    for (i in rownames(dffinal)) {
+        if (!(i %in% c("CD4.IG", "VRC01", "CH103", "EM4C04"))) {
+            new_row <- c(new_row,paste0("mAb-",i))
+        } else {
+            new_row <- c(new_row,i)
+        }
+    }
+    rownames(dffinal) <- new_row 
     v=1
     for (c in colnames(dffinal)) {
         if(length(rownames(dffinal)[v:length(rownames(dffinal))])<2) {
@@ -373,12 +401,18 @@ generate_final_avgs_hm <- function(dfall, primary, secondary, label) {
         }
         v=v+1
     }
+    for (c in colnames(dffinal)) {
+        #f (c!="EM4C04") {
+            c1 <- str_remove(c, "mAb\\-")
+            dffinal[c,c ] <- dfall[c1,c1 ]
+        #}
+    }
     col_fun <- colorRamp2(c(0, 20, 40, 60, 80, 100), c("darkred","red", "orange", "yellow","green", "darkgreen"))
 
-    Stagecol <- factor(rep(c("695", "684","1303","386","385",  "VRCO1", "EM4C04"), c(3, 4, 1, 2, 3, 1, 1)),
-    levels =c("695", "684","1303","386","385",  "VRCO1", "EM4C04"))
-    Stagerow <- factor(rep(c("695", "684","1303","386","385", "VRCO1"), c(3, 4,1, 2, 3, 1)),
-    levels =c("695", "684","1303","386","385", "VRCO1"))
+    Stagecol <- factor(rep(c("695", "684","1303","386","385",  "VRCO1", "CD4.IG", "CH103"), c(1, 1, 1, 1, 1,1 , 1,1)),
+    levels =c("695", "684","1303","386","385",  "VRCO1", "EM4C04","CD4.IG", "CH103"))
+    Stagerow <- factor(rep(c("695", "684","1303","386","385", "VRCO1", "CD4.IG", "CH103"), c(1, 1, 1,1, 1,1,1,1)),
+    levels =c("695", "684","1303","386","385", "VRCO1","CD4.IG", "CH103"))
     hmC <- Heatmap(dffinal,
         name = "% residual\nbinding", na_col = "white",
         col = col_fun, 
@@ -394,7 +428,7 @@ generate_final_avgs_hm <- function(dfall, primary, secondary, label) {
         border = F, width = unit(12, "cm"),height = unit(10, "cm"),
         cell_fun = function(j, i, x, y, w, h, col) { # add text to each grid
         if (!is.na(dffinal[i,j])) {
-            grid.text(round(dffinal[i, j],0), x, y, gp=gpar(fontsize=8))
+            grid.text(round(dffinal[i, j],0), x, y, gp=gpar(fontsize=12))
             }
         },
         heatmap_legend_param = list(
@@ -433,7 +467,7 @@ generate_final_avgs_hm <- function(dfall, primary, secondary, label) {
         cluster_column_slices = F,
         column_title_rot = 90,
         row_title_rot = 0,
-        border = F, width = unit(12, "cm"),height = unit(10, "cm"),
+        border = F, width = unit(12, "cm"),height = unit(12, "cm"),
         cell_fun = function(j, i, x, y, w, h, col) { # add text to each grid
         if (!is.na(dffinal[i,j])) {
             grid.text(round(dffinal[i, j],0), x, y, gp=gpar(fontsize=10))
@@ -464,22 +498,18 @@ generate_VRC01figs <- function(df, label) {
     dftmp <- df[complete.cases(df), ]
     dftmpstmpVRC01 <- dftmp %>%
     filter(str_detect(pair, "VRC01"))
-    if (TRUE %in% str_detect(dftmpstmpVRC01$pair, "1A8")) {
-        clonotype_info <- c("684", "684", "684", "684", "1303", "695", "695", "695","386", "386","385", "385", "385", NA)
-        order_pairs <- c("18-VRC01","32-VRC01", "1A8-VRC01", "1G3-VRC01",
-            "76-VRC01", "4-VRC01", "70-VRC01", "12-VRC01",
-            "16-VRC01", "14-VRC01", "6-VRC01", "10-VRC01", "28-VRC01", "EM4C04-VRC01")
-    } else {
-           clonotype_info <- c("684", "684", "684", "1303", "695", "695", "695","386", "386","385", "385", "385",  NA)
-            order_pairs <- c("18-VRC01","32-VRC01", "1G3-VRC01",
-            "76-VRC01", "4-VRC01", "70-VRC01", "12-VRC01",
-            "16-VRC01", "14-VRC01", "6-VRC01", "10-VRC01", "28-VRC01", "EM4C04-VRC01")
-    }
+    clonotype_info <- c( "1303", "684","695", "386", "385", NA, NA)
+    order_pairs <- c( "76-VRC01","1A8-VRC01", "4-VRC01",  "14-VRC01", "6-VRC01",  "VRC01-CD4.IG", "CH103-VRC01")
+
     dftmpstmpVRC01 <- dftmpstmpVRC01[order(match(dftmpstmpVRC01$pair, order_pairs)), ]
     dftmpstmpVRC01$clonotype <- clonotype_info
 
     dftmpstmpVRC01$pair <- factor(dftmpstmpVRC01$pair, levels=order_pairs)
     dftmpstmpVRC01$id <- c(1:nrow(dftmpstmpVRC01))
+    dftmpstmpVRC01$pair <- str_remove_all(dftmpstmpVRC01$pair, "VRC01")
+    dftmpstmpVRC01$pair <- str_remove_all(dftmpstmpVRC01$pair, "\\-")
+
+    print( dftmpstmpVRC01$pair)
     label_data <- dftmpstmpVRC01
     number_of_bar <- nrow(label_data)
     angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
@@ -491,7 +521,8 @@ generate_VRC01figs <- function(df, label) {
     summarize(start=min(id), end=max(id) +0.3) %>% 
     rowwise() %>% 
     mutate(title=mean(c(start, end)))
-    base_data <- as.data.frame(base_data)   
+    base_data <- as.data.frame(base_data)
+ 
     p <- ggplot(dftmpstmpVRC01, aes(x=factor(id), y=avg, fill=avg)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
     geom_bar(stat="identity") +
     ylim(-100,120) +
@@ -503,11 +534,11 @@ generate_VRC01figs <- function(df, label) {
         plot.margin = unit(c(0,1,0,1), "cm") 
     ) + scale_fill_distiller(palette="RdYlGn",breaks=c(0,20,40,60,80,100), labels=c(0,20,40,60,80,100), direction = 1) +
     coord_polar(start = 0) + labs(fill="% residual\nbinding") +
-    geom_text(data=label_data, aes(x=id, y=avg+10, label=pair, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=2.5, angle= label_data$angle, inherit.aes = FALSE ) +
+    geom_text(data=label_data, aes(x=id, y=avg+10, label=pair, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=6, angle= label_data$angle, inherit.aes = FALSE ) +
     geom_segment(data=base_data, aes(x = start, y = -16, xend = end, yend = -16), colour = "black", alpha=0.8, size=0.6 , inherit.aes = FALSE )  +
-    geom_text(data=base_data, aes(x = title, y = -50, label=clonotype), hjust=c(1,1,0.5,0,0,0), colour = "black", alpha=0.8, size=3, fontface="bold", inherit.aes = FALSE)
-    ggsave(file.path(results_folder, paste0("VRC01_",label,".png")), width=8.5, height=6.5, dpi=300, bg="white")
-    ggsave(file.path(results_folder, paste0("VRC01_",label,".pdf")), width=8.5, height=6.5, dpi=300, bg="white")
+    geom_text(data=base_data, aes(x = title, y = -50, label=clonotype), hjust=c(1,1,0.5,0,0,0), colour = "black", alpha=0.8, size=4, fontface="bold", inherit.aes = FALSE)
+    ggsave(file.path(results_folder, paste0("VRC01_",label,".png")), width=8.5, height=6.5, dpi=500, bg="white")
+    ggsave(file.path(results_folder, paste0("VRC01_",label,".pdf")), width=8.5, height=6.5, dpi=500, bg="white")
     
     dftmpstmpVRC01binary <- dftmpstmpVRC01
     dftmpstmpVRC01binary$binary <- dftmpstmpVRC01binary$avg
@@ -520,8 +551,9 @@ generate_VRC01figs <- function(df, label) {
         }
     }
     dftmpstmpVRC01binary$binary <- binary
-    dftmpstmpVRC01binary$pair <- str_remove_all(dftmpstmpVRC01binary$pair, "-VRC01")
-    
+    dftmpstmpVRC01binary$pair <- str_remove_all(dftmpstmpVRC01binary$pair, "VRC01")
+    dftmpstmpVRC01binary$pair <- str_remove_all(dftmpstmpVRC01binary$pair, "\\-")
+
     label_data <- dftmpstmpVRC01binary
     number_of_bar <- nrow(label_data)
     angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
@@ -546,11 +578,194 @@ generate_VRC01figs <- function(df, label) {
         plot.margin = unit(c(0,1,0,1), "cm") 
     ) + scale_fill_manual(values=c(">50"="#026464", "<50"="#895129")) +
     coord_polar(start = 0) + labs(fill="% residual\nbinding") +
-    geom_text(data=label_data, aes(x=id, y=avg+10, label=pair, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=4.5, angle= label_data$angle, inherit.aes = FALSE ) +
+    geom_text(data=label_data, aes(x=id, y=avg+10, label=pair, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=6, angle= label_data$angle, inherit.aes = FALSE ) +
     geom_segment(data=base_data, aes(x = start, y = -16, xend = end, yend = -16), colour = "black", alpha=0.8, size=0.6 , inherit.aes = FALSE )  +
-    geom_text(data=base_data, aes(x = title, y = -50, label=clonotype), hjust=c(1,1,0.5,0,0,0), colour = "black", alpha=0.8, size=3, fontface="bold", inherit.aes = FALSE)
+    geom_text(data=base_data, aes(x = title, y = -50, label=clonotype), hjust=c(1,1,0.5,0,0,0), colour = "black", alpha=0.8, size=4, fontface="bold", inherit.aes = FALSE)
     ggsave(file.path(results_folder, paste0("VRC01_",label,"_binary.png")), width=8.5, height=6.5, dpi=500, bg="white")
     ggsave(file.path(results_folder, paste0("VRC01_",label,"_binary.pdf")), width=8.5, height=6.5, dpi=500, bg="white")
+
+}
+
+generate_CD4figs <- function(df, label) {
+    dftmp <- df[complete.cases(df), ]
+    dftmpstmpVRC01 <- dftmp %>%
+    filter(str_detect(pair, "CD4"))
+
+    print(dftmpstmpVRC01)
+    clonotype_info <- c( "1303","684", "695", "386", "385", NA, NA)
+    order_pairs <- c( "76-CD4.IG", "1A8-CD4.IG","4-CD4.IG", "14-CD4.IG", "6-CD4.IG", "VRC01-CD4.IG", "CH103-CD4.IG")
+
+    dftmpstmpVRC01 <- dftmpstmpVRC01[order(match(dftmpstmpVRC01$pair, order_pairs)), ]
+    dftmpstmpVRC01$clonotype <- clonotype_info
+    dftmpstmpVRC01$pair <- factor(dftmpstmpVRC01$pair, levels=order_pairs)
+    dftmpstmpVRC01$pair <- str_remove_all(dftmpstmpVRC01$pair, "CD4.IG")
+    dftmpstmpVRC01$pair <- str_remove_all(dftmpstmpVRC01$pair, "\\-")
+
+
+    dftmpstmpVRC01$id <- c(1:nrow(dftmpstmpVRC01))
+    label_data <- dftmpstmpVRC01
+    number_of_bar <- nrow(label_data)
+    angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
+    label_data$hjust <- ifelse( angle < -90, 1, 0)
+    label_data$angle <- ifelse(angle < -90, angle+180, angle)
+
+    base_data <- dftmpstmpVRC01 %>% 
+    group_by(clonotype) %>% 
+    summarize(start=min(id), end=max(id) +0.3) %>% 
+    rowwise() %>% 
+    mutate(title=mean(c(start, end)))
+    base_data <- as.data.frame(base_data)   
+    p <- ggplot(dftmpstmpVRC01, aes(x=factor(id), y=avg, fill=avg)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+    geom_bar(stat="identity") +
+    ylim(-100,120) +
+    theme_minimal() +
+    theme(
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.grid = element_blank(),
+        plot.margin = unit(c(0,1,0,1), "cm") 
+    ) + scale_fill_distiller(palette="RdYlGn",breaks=c(0,20,40,60,80,100), labels=c(0,20,40,60,80,100), direction = 1) +
+    coord_polar(start = 0) + labs(fill="% residual\nbinding") +
+    geom_text(data=label_data, aes(x=id, y=avg+10, label=pair, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=6, angle= label_data$angle, inherit.aes = FALSE ) +
+    geom_segment(data=base_data, aes(x = start, y = -16, xend = end, yend = -16), colour = "black", alpha=0.8, size=0.6 , inherit.aes = FALSE )  +
+    geom_text(data=base_data, aes(x = title, y = -50, label=clonotype), hjust=c(1,1,0.5,0,0,0), colour = "black", alpha=0.8, size=4, fontface="bold", inherit.aes = FALSE)
+    ggsave(file.path(results_folder, paste0("CD4.IG_",label,".png")), width=8.5, height=6.5, dpi=300, bg="white")
+    ggsave(file.path(results_folder, paste0("CD4.IG_",label,".pdf")), width=8.5, height=6.5, dpi=300, bg="white")
+    
+    dftmpstmpVRC01binary <- dftmpstmpVRC01
+    dftmpstmpVRC01binary$binary <- dftmpstmpVRC01binary$avg
+    binary <- c()
+    for (i in dftmpstmpVRC01binary$binary) {
+        if ( i > 50) {
+            binary <- c(binary, ">50")
+        } else { 
+            binary <- c(binary, "<50")
+        }
+    }
+    dftmpstmpVRC01binary$binary <- binary
+    dftmpstmpVRC01binary$pair <- str_remove_all(dftmpstmpVRC01binary$pair, "CD4.IG")
+    dftmpstmpVRC01binary$pair <- str_remove_all(dftmpstmpVRC01binary$pair, "\\-")
+
+    label_data <- dftmpstmpVRC01binary
+    number_of_bar <- nrow(label_data)
+    angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
+    label_data$hjust <- ifelse( angle < -90, 1, 0)
+    label_data$angle <- ifelse(angle < -90, angle+180, angle)
+
+    base_data <- dftmpstmpVRC01binary %>% 
+    group_by(clonotype) %>% 
+    summarize(start=min(id), end=max(id) +0.3) %>% 
+    rowwise() %>% 
+    mutate(title=mean(c(start, end)))
+    base_data <- as.data.frame(base_data)       
+    
+    p <- ggplot(dftmpstmpVRC01binary, aes(x=factor(id), y=avg, fill=binary)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+    geom_bar(stat="identity") +
+    ylim(-100,120) +
+    theme_minimal() +
+    theme(
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.grid = element_blank(),
+        plot.margin = unit(c(0,1,0,1), "cm") 
+    ) + scale_fill_manual(values=c(">50"="#026464", "<50"="#895129")) +
+    coord_polar(start = 0) + labs(fill="% residual\nbinding") +
+    geom_text(data=label_data, aes(x=id, y=avg+10, label=pair, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=6, angle= label_data$angle, inherit.aes = FALSE ) +
+    geom_segment(data=base_data, aes(x = start, y = -16, xend = end, yend = -16), colour = "black", alpha=0.8, size=0.6 , inherit.aes = FALSE )  +
+    geom_text(data=base_data, aes(x = title, y = -50, label=clonotype), hjust=c(1,1,0.5,0,0,0), colour = "black", alpha=0.8, size=4, fontface="bold", inherit.aes = FALSE)
+    ggsave(file.path(results_folder, paste0("CD4.IG_",label,"_binary.png")), width=8.5, height=6.5, dpi=500, bg="white")
+    ggsave(file.path(results_folder, paste0("CD4.IG_",label,"_binary.pdf")), width=8.5, height=6.5, dpi=500, bg="white")
+
+}
+
+generate_CH103figs <- function(df, label) {
+    dftmp <- df[complete.cases(df), ]
+    dftmpstmpVRC01 <- dftmp %>%
+    filter(str_detect(pair, "CH103"))
+
+    print(dftmpstmpVRC01)
+    clonotype_info <- c( "1303","684", "695", "386", "385", NA, NA)
+    order_pairs <- c( "CH103-76", "CH103-1A8","CH103-4",  "CH103-14", "CH103-6", "CH103-CD4.IG", "CH103-VRC01")
+
+    dftmpstmpVRC01 <- dftmpstmpVRC01[order(match(dftmpstmpVRC01$pair, order_pairs)), ]
+    dftmpstmpVRC01$clonotype <- clonotype_info
+    dftmpstmpVRC01$pair <- factor(dftmpstmpVRC01$pair, levels=order_pairs)
+    dftmpstmpVRC01$pair <- str_remove_all(dftmpstmpVRC01$pair, "CH103")
+    dftmpstmpVRC01$pair <- str_remove_all(dftmpstmpVRC01$pair, "\\-")
+
+    dftmpstmpVRC01$id <- c(1:nrow(dftmpstmpVRC01))
+    label_data <- dftmpstmpVRC01
+    number_of_bar <- nrow(label_data)
+    angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
+    label_data$hjust <- ifelse( angle < -90, 1, 0)
+    label_data$angle <- ifelse(angle < -90, angle+180, angle)
+
+    base_data <- dftmpstmpVRC01 %>% 
+    group_by(clonotype) %>% 
+    summarize(start=min(id), end=max(id) +0.3) %>% 
+    rowwise() %>% 
+    mutate(title=mean(c(start, end)))
+    base_data <- as.data.frame(base_data)   
+    p <- ggplot(dftmpstmpVRC01, aes(x=factor(id), y=avg, fill=avg)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+    geom_bar(stat="identity") +
+    ylim(-100,120) +
+    theme_minimal() +
+    theme(
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.grid = element_blank(),
+        plot.margin = unit(c(0,1,0,1), "cm") 
+    ) + scale_fill_distiller(palette="RdYlGn",breaks=c(0,20,40,60,80,100), labels=c(0,20,40,60,80,100), direction = 1) +
+    coord_polar(start = 0) + labs(fill="% residual\nbinding") +
+    geom_text(data=label_data, aes(x=id, y=avg+10, label=pair, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=6, angle= label_data$angle, inherit.aes = FALSE ) +
+    geom_segment(data=base_data, aes(x = start, y = -16, xend = end, yend = -16), colour = "black", alpha=0.8, size=0.6 , inherit.aes = FALSE )  +
+    geom_text(data=base_data, aes(x = title, y = -50, label=clonotype), hjust=c(1,1,0.5,0,0,0), colour = "black", alpha=0.8, size=4, fontface="bold", inherit.aes = FALSE)
+    ggsave(file.path(results_folder, paste0("CH103_",label,".png")), width=8.5, height=6.5, dpi=300, bg="white")
+    ggsave(file.path(results_folder, paste0("CH103_",label,".pdf")), width=8.5, height=6.5, dpi=300, bg="white")
+    
+    dftmpstmpVRC01binary <- dftmpstmpVRC01
+    dftmpstmpVRC01binary$binary <- dftmpstmpVRC01binary$avg
+    binary <- c()
+    for (i in dftmpstmpVRC01binary$binary) {
+        if ( i > 50) {
+            binary <- c(binary, ">50")
+        } else { 
+            binary <- c(binary, "<50")
+        }
+    }
+    dftmpstmpVRC01binary$binary <- binary
+    dftmpstmpVRC01binary$pair <- str_remove_all(dftmpstmpVRC01binary$pair, "CH103")
+    dftmpstmpVRC01$pair <- str_remove_all(dftmpstmpVRC01$pair, "\\-")
+
+    label_data <- dftmpstmpVRC01binary
+    number_of_bar <- nrow(label_data)
+    angle <- 90 - 360 * (label_data$id-0.5) /number_of_bar     # I substract 0.5 because the letter must have the angle of the center of the bars. Not extreme right(1) or extreme left (0)
+    label_data$hjust <- ifelse( angle < -90, 1, 0)
+    label_data$angle <- ifelse(angle < -90, angle+180, angle)
+
+    base_data <- dftmpstmpVRC01binary %>% 
+    group_by(clonotype) %>% 
+    summarize(start=min(id), end=max(id) +0.3) %>% 
+    rowwise() %>% 
+    mutate(title=mean(c(start, end)))
+    base_data <- as.data.frame(base_data)       
+    
+    p <- ggplot(dftmpstmpVRC01binary, aes(x=factor(id), y=avg, fill=binary)) +       # Note that id is a factor. If x is numeric, there is some space between the first bar
+    geom_bar(stat="identity") +
+    ylim(-100,120) +
+    theme_minimal() +
+    theme(
+        axis.text = element_blank(),
+        axis.title = element_blank(),
+        panel.grid = element_blank(),
+        plot.margin = unit(c(0,1,0,1), "cm") 
+    ) + scale_fill_manual(values=c(">50"="#026464", "<50"="#895129")) +
+    coord_polar(start = 0) + labs(fill="% residual\nbinding") +
+    geom_text(data=label_data, aes(x=id, y=avg+10, label=pair, hjust=hjust), color="black", fontface="bold",alpha=0.6, size=6, angle= label_data$angle, inherit.aes = FALSE ) +
+    geom_segment(data=base_data, aes(x = start, y = -16, xend = end, yend = -16), colour = "black", alpha=0.8, size=0.6 , inherit.aes = FALSE )  +
+    geom_text(data=base_data, aes(x = title, y = -50, label=clonotype), hjust=c(1,1,0.5,0,0,0), colour = "black", alpha=0.8, size=4, fontface="bold", inherit.aes = FALSE)
+    ggsave(file.path(results_folder, paste0("CH103_",label,"_binary.png")), width=8.5, height=6.5, dpi=500, bg="white")
+    ggsave(file.path(results_folder, paste0("CH103_",label,"_binary.pdf")), width=8.5, height=6.5, dpi=500, bg="white")
 
 }
 
@@ -570,37 +785,36 @@ count_values<-function(dfcomb, allnormvalues) {
     write.csv(dfcountvalues, file.path(results_folder, "replicatecount.csv"), quote=F)
     return(dfcountvalues)
 }
-
+# stop()
 #############-- Process data --#############
 
-results_folder="1.processedBLIdata_1A8_noRun9-10-11_FULL"
+results_folder="1.processedBLIdata_1A8_noRun9-10-11_FULL_reduced_CH103"
 generate_folder(results_folder)
 
-data = read_in_raw_bli_data("./TandemEPComparisons_AM_LWedit_rawdata_FULL.xlsx", results_folder = results_folder)
+data = read_in_raw_bli_data("./TandemEPComparisons_AM_LWedit_rawdata_FULL_CD4_CH103.xlsx", results_folder = results_folder)
 
 primary <- unique(data$total_antibodies[!(data$total_antibodies %in% c("SAMPLE"))])
 secondary <- unique(data$total_antibodies[!(data$total_antibodies %in% c("SAMPLE"))])
 secondary <- secondary[secondary!="EM4C04"]
-orderp <- c("70", "4", "12", "18", "1G3", "1A8", "32", "76", "16", "14", "6", "10", "28", "VRC01", "EM4C04")
-orders <- c("70", "4", "12", "18", "1G3", "1A8", "32", "76", "16", "14", "6", "10", "28", "VRC01")
+orderp <- c( "4", "1A8", "76", "14", "6", "VRC01", "CD4.IG", "CH103")
+orders <- c( "4", "1A8", "76", "14", "6", "VRC01", "CD4.IG")
 dfcomb <- generate_pair_combinations(orderp, orders)
 
 #organize data 
-dataorg <- organize_data(data, dfcomb, primary, secondary)
+dataorg <- organize_data(data, dfcomb, orderp, c(orders,  "CH103"))
 dfcountvalues = count_values(dfcomb, dataorg$allnormvalues)
 
 all_stats <- absolute_diff_between_pairs(dataorg$normavgs, "all")
 NoNeg_stats <- absolute_diff_between_pairs(dataorg$normavgsNoNegValues, "NoNegValues")
 Zero_stats <- absolute_diff_between_pairs(dataorg$normavgsZeros, "Zeros")
 
-dfall <- generate_initial_avgs_hm(dataorg$normavgs, primary, secondary, "all")
-dfNoNeg <- generate_initial_avgs_hm(dataorg$normavgsNoNegValues, primary, secondary, "NoNegValues")
-dfZeros <- generate_initial_avgs_hm(dataorg$normavgsZeros, primary, secondary, "Zerovalues")
-stop()
+dfall <- generate_initial_avgs_hm(dataorg$normavgs, orderp, c(orders,  "CH103"), "all")
+dfNoNeg <- generate_initial_avgs_hm(dataorg$normavgsNoNegValues, orderp,c(orders,"CH103"), "NoNegValues")
+dfZeros <- generate_initial_avgs_hm(dataorg$normavgsZeros, orderp, c(orders, "CH103"), "Zerovalues")
 
-generate_final_avgs_hm(dfall, primary, secondary, "all")
-generate_final_avgs_hm(dfNoNeg, primary, secondary, "NoNegValues")
-generate_final_avgs_hm(dfZeros, primary, secondary, "Zerovalues")
+generate_final_avgs_hm(dfall, orderp,  c(orders,  "CH103"), "all")
+generate_final_avgs_hm(dfNoNeg, orderp, c(orders, "CH103"), "NoNegValues")
+generate_final_avgs_hm(dfZeros, orderp, c(orders, "CH103"), "Zerovalues")
 
 #############-- VRC01 data only --#############
 
@@ -608,4 +822,15 @@ generate_VRC01figs(all_stats, label="all")
 generate_VRC01figs(NoNeg_stats, label="NoNegValues") 
 generate_VRC01figs(Zero_stats, label="Zeros") 
 
+stop()
+#############-- CD4 data only --#############
 
+generate_CD4figs(all_stats, label="all") 
+generate_CD4figs(NoNeg_stats, label="NoNegValues") 
+generate_CD4figs(Zero_stats, label="Zeros") 
+
+#############-- CH103 data only --#############
+
+generate_CH103figs(all_stats, label="all") 
+# generate_CH103figs(NoNeg_stats, label="NoNegValues") 
+generate_CH103figs(Zero_stats, label="Zeros") 

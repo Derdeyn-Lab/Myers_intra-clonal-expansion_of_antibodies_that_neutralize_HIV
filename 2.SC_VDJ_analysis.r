@@ -535,6 +535,49 @@ clonalHomeostasis(combined.BCR.comb, cloneCall = "LW_clones",cloneSize = c(Rare 
 ggsave(file.path(results_folder, "Figure1A.png"),width=4.5, height=4, dpi=300)
 ggsave(file.path(results_folder, "Figure1A.pdf"),width=4.5, height=4, dpi=300)
 
+combined_df <- c()
+for (n in names(combined.BCR.comb)) {
+    combined.BCR.comb[[n]]$sample <- rep(n, nrow(combined.BCR.comb[[n]]))
+    combined_df <- rbind(combined_df,combined.BCR.comb[[n]] )
+}
+# combined_df <- do.call("rbind", combined.BCR.comb)
+combined_df <- combined_df[,c("sample", "LW_clones")]
+samplecountdf <- combined_df %>% group_by(sample) %>%
+    dplyr::count(sample) %>% as.data.frame()
+combined_df_pl <- combined_df %>% group_by(sample,  LW_clones) %>%
+    dplyr::count(LW_clones) %>% as.data.frame()
+combined_df_pl_final <- combined_df_pl %>% group_by(sample) %>%
+  mutate(percentage = (n / sum(n))*100) %>%
+  ungroup() %>% as.data.frame()
+
+testdf <- combined_df_pl_final %>% group_by(sample) %>%
+    summarise(sum=sum(percentage))
+df_custom_bins <- combined_df_pl_final %>%
+  mutate(
+    bin = cut(percentage,
+                breaks = c(0, 0.1, 2, 10, 30,100 ),
+                labels = c("Rare", "Small .1% < X <= 2%", "Medium 2% < X <= 10%", "Large 10% < X <= 30%", "Hyperexpanded"),
+                right = FALSE) # right = FALSE means intervals are [a, b)
+  )
+df_custom_bins_final <- df_custom_bins %>% group_by(sample, bin) %>%
+    dplyr::count(bin) %>% as.data.frame()
+df_custom_bins_final$label <- df_custom_bins_final$bin
+df_custom_bins_final$label <- str_remove_all(df_custom_bins_final$label, " .1% < X <= 2%")
+df_custom_bins_final$label <- str_remove_all(df_custom_bins_final$label, " 2% < X <= 10%")
+df_custom_bins_final$label <- str_remove_all(df_custom_bins_final$label, " 10% < X <= 30%")
+df_custom_bins_final$label <- factor(df_custom_bins_final$label, levels=c("Small", "Medium", "Large"))
+ggplot(df_custom_bins_final, aes(x=sample,y=n, fill=bin)) + 
+    facet_wrap(~label, ncol=1, scale="free_y") +
+    geom_col(width = 1, col="black", position = position_dodge2(preserve = "single")) + theme_Publication() + 
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 7.5), axis.title.x=element_blank(), 
+    legend.text = element_text(size =7),  strip.background = element_blank()) +
+    scale_fill_manual(values =c("#850dcf","#d93fd9","#ee9b01" )) + labs(y="Number of clonotypes", fill="") +
+    scale_x_discrete(labels = c("Wk18", "Wk20", "Wk26", "Wk36","Wk48","Wk49","Wk80","Wk81","LN-Wk83", "Wk87", "Wk93"))
+ggsave(file.path(results_folder, "Figure1A_alternative.png"), width=4, height=5.5, dpi=300)
+ggsave(file.path(results_folder, "Figure1A_alternative.pdf"), width=4, height=5.5, dpi=300)
+
+
+
 lwcoi <- c("684", "695", "1303","386","385","599")
 pl <- clonalCompare(combined.BCR.comb, 
     top.clones = 30,
